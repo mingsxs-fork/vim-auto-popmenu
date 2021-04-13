@@ -43,8 +43,38 @@ function! s:meets_keyword(context)
 	return 1
 endfunc
 
-function! s:check_back_space() abort
-	  return col('.') < 2 || getline('.')[col('.') - 2]  =~# '\s'
+function! s:on_tab()
+	if pumvisible()
+		let completeinfo = complete_info()
+		if len(completeinfo['items']) == 1
+			let b:apc_tab_mode = 0
+			return "\<c-n>\<c-y>"
+		endif
+		let b:apc_tab_mode = 1
+		return "\<c-n>"
+	endif
+
+	if col('.') < 2 || getline('.')[col('.') - 2] =~# '\s'
+		return "\<tab>"
+	elseif exists('b:apc_tab_mode') && b:apc_tab_mode == 0
+		return "\<tab>"
+	endif
+
+	let b:apc_tab_mode = 0
+	return "\<c-n>"
+endfunc
+
+function! s:on_cr()
+	if pumvisible()
+		let b:apc_tab_mode = 0
+		if get(g:, 'apc_cr_confirm', 0) == 0
+			return "\<c-y>\<cr>"
+		else
+			return "\<c-y>"
+		endif
+	else
+		return "\<cr>"
+	endif
 endfunc
 
 function! s:on_backspace()
@@ -110,20 +140,12 @@ function! s:apc_enable()
 	augroup END
 	let b:apc_init_autocmd = 1
 	if g:apc_enable_tab
-		inoremap <silent><buffer><expr> <tab>
-					\ pumvisible()? "\<c-n>" :
-					\ <SID>check_back_space() ? "\<tab>" : "\<c-n>"
+		inoremap <silent><buffer><expr> <tab> <SID>on_tab()
 		inoremap <silent><buffer><expr> <s-tab>
 					\ pumvisible()? "\<c-p>" : "\<s-tab>"
 		let b:apc_init_tab = 1
 	endif
-	if get(g:, 'apc_cr_confirm', 0) == 0
-		inoremap <silent><buffer><expr> <cr> 
-					\ pumvisible()? "\<c-y>\<cr>" : "\<cr>"
-	else
-		inoremap <silent><buffer><expr> <cr> 
-					\ pumvisible()? "\<c-y>" : "\<cr>"
-	endif
+	inoremap <silent><buffer><expr> <cr> <SID>on_cr()
 	inoremap <silent><buffer><expr> <bs> <SID>on_backspace()
 	let b:apc_init_bs = 1
 	let b:apc_init_cr = 1
@@ -164,6 +186,9 @@ endfunc
 function! s:apc_check_init()
 	if &bt != ''
 		return
+	endif
+	if exists('b:apc_tab_mode')
+		unlet b:apc_tab_mode
 	endif
 	if get(g:apc_enable_ft, &ft, 0) != 0
 		ApcEnable
