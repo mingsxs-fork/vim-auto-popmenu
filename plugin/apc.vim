@@ -45,8 +45,7 @@ endfunc
 
 function! s:on_tab()
 	if pumvisible()
-		let completeinfo = complete_info()
-		if len(completeinfo['items']) == 1
+		if exists('*complete_info') && len(complete_info()['items']) == 1
 			let b:apc_tab_mode = 0
 			return "\<c-n>\<c-y>"
 		endif
