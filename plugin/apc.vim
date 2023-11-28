@@ -60,7 +60,7 @@ function! s:on_tab()
 	endif
 
 	let b:apc_tab_mode = 0
-	return "\<c-n>"
+	return "\<tab>"
 endfunc
 
 function! s:on_cr()
@@ -140,8 +140,7 @@ function! s:apc_enable()
 	let b:apc_init_autocmd = 1
 	if g:apc_enable_tab
 		inoremap <silent><buffer><expr> <tab> <SID>on_tab()
-		inoremap <silent><buffer><expr> <s-tab>
-					\ pumvisible()? "\<c-p>" : "\<s-tab>"
+		inoremap <silent><buffer><expr> <s-tab> "\<tab>"
 		let b:apc_init_tab = 1
 	endif
 	inoremap <silent><buffer><expr> <cr> <SID>on_cr()
